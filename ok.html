@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload to Google Drive</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        /* Your existing styles */
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Upload Image to Google Drive</h2>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="imageInput" accept="image/*" />
+            <br />
+            <button type="submit">Upload Image</button>
+        </form>
+
+        <div id="imagePreview"></div>
+    </div>
+
+    <script>
+        let GoogleAuth; // Global variable for Google Auth
+
+        // Load the API client and auth2 library
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        // Initialize the API client and auth2 library
+        function initClient() {
+            gapi.client.init({
+                apiKey: 'AIzaSyDBbr3RrB56EudJTzj-_vXQpWTBmELo3mg',
+                clientId: '838761565504-bc6amfmr0ibg225aikc5piufnjhqq7gt.apps.googleusercontent.com',
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+                scope: 'https://www.googleapis.com/auth/drive.file'
+            }).then(() => {
+                GoogleAuth = gapi.auth2.getAuthInstance();
+                // Listen for sign-in state changes
+                GoogleAuth.isSignedIn.listen(updateSigninStatus);
+
+                // Handle the initial sign-in state
+                updateSigninStatus(GoogleAuth.isSignedIn.get());
+            });
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                // User is signed in
+            } else {
+                // User is not signed in, you can prompt them to sign in
+                GoogleAuth.signIn();
+            }
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('imageInput');
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgPreview = document.createElement('img');
+                    imgPreview.src = e.target.result;
+                    document.getElementById('imagePreview').innerHTML = '';
+                    document.getElementById('imagePreview').appendChild(imgPreview);
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to Google Drive
+                const metadata = {
+                    'name': file.name,
+                    'mimeType': file.type
+                };
+
+                const accessToken = GoogleAuth.currentUser.get().getAuthResponse().access_token;
+
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', file);
+
+                fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                    body: form
+                }).then((response) => {
+                    return response.json();
+                }).then((data) => {
+                    console.log('File uploaded successfully:', data);
+                }).catch((error) => {
+                    console.error('Error uploading file:', error);
+                });
+            }
+        });
+
+        // Load the Google API client library on page load
+        window.onload = handleClientLoad;
+    </script>
+
+</body>
+</html>

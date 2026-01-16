@@ -957,6 +957,13 @@ footer {
     .explore-info {
         margin: 0 auto;
     }
+    .h1 {
+        border: 2px solid #000; /* Border with 2px solid black */
+        border-radius: 10px; /* Rounded corners with a radius of 10 pixels */
+        padding: 10px; /* Add padding inside the box */
+        background-color: #f0f0f0; /* Set the background color to light gray */
+      }
+
 
 }
 
